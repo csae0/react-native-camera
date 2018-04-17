@@ -35,7 +35,7 @@ import com.google.zxing.common.HybridBinarizer;
 class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceTextureListener, Camera.PreviewCallback {
     private int _cameraType;
     private int _captureMode;
-    private SurfaceTexture _surfaceTexture;
+    private static ArrayList<SurfaceTexture> _surfaceTextures = new ArrayList<>();
     private int _surfaceTextureWidth;
     private int _surfaceTextureHeight;
     private boolean _isStarting;
@@ -58,7 +58,7 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        _surfaceTexture = surface;
+        _surfaceTextures.add(surface);
         _surfaceTextureWidth = width;
         _surfaceTextureHeight = height;
         startCamera();
@@ -72,10 +72,14 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        _surfaceTexture = null;
-        _surfaceTextureWidth = 0;
-        _surfaceTextureHeight = 0;
-        stopCamera();
+        if (_surfaceTextures.size() == 1) {
+            _surfaceTextures.clear();
+            _surfaceTextureWidth = 0;
+            _surfaceTextureHeight = 0;
+            stopCamera();
+        } else {
+            _surfaceTextures.remove(0);             
+        }
         return true;
     }
 
@@ -121,7 +125,7 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
     }
 
     private void startPreview() {
-        if (_surfaceTexture != null) {
+        if (_surfaceTextures.size() > 0) {
             startCamera();
         }
     }
@@ -174,7 +178,7 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
                 parameters.setPictureSize(optimalPictureSize.width, optimalPictureSize.height);
 
                 _camera.setParameters(parameters);
-                _camera.setPreviewTexture(_surfaceTexture);
+                _camera.setPreviewTexture(_surfaceTextures.get(_surfaceTextures.size() - 1));
                 _camera.startPreview();
                 // send previews to `onPreviewFrame`
                 _camera.setPreviewCallback(this);
