@@ -119,9 +119,9 @@
     NSLog(@"removeFromSuperview");
     
   [self stopSession];
-  [super removeFromSuperview];
   [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
   [UIApplication sharedApplication].idleTimerDisabled = _previousIdleTimerDisabled;
+  [super removeFromSuperview];
 }
 
 - (void)orientationChanged:(NSNotification *)notification{
