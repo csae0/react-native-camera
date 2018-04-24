@@ -364,6 +364,9 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         // Get the pointer ID
+        if (null == _camera) {
+            return false;
+        }
         Camera.Parameters params = _camera.getParameters();
         int action = event.getAction();
 
