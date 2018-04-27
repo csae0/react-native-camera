@@ -11,8 +11,10 @@ import android.hardware.Camera;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.EnumMap;
 import java.util.EnumSet;
 
+import com.facebook.react.uimanager.ThemedReactContext;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
@@ -32,7 +35,7 @@ import com.google.zxing.Result;
 import com.google.zxing.ResultPoint;
 import com.google.zxing.common.HybridBinarizer;
 
-class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceTextureListener, Camera.PreviewCallback {
+class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceTextureListener, Camera.PreviewCallback, LifecycleEventListener {
     private int _cameraType;
     private int _captureMode;
     private static ArrayList<SurfaceTexture> _surfaceTextures = new ArrayList<>();
@@ -52,6 +55,8 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
     public RCTCameraViewFinder(Context context, int type) {
         super(context);
         this.setSurfaceTextureListener(this);
+        ((ThemedReactContext)context).addLifecycleEventListener(this);
+
         this._cameraType = type;
         this.initBarcodeReader(RCTCamera.getInstance().getBarCodeTypes());
     }
@@ -78,7 +83,7 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
             _surfaceTextureHeight = 0;
             stopCamera();
         } else {
-            _surfaceTextures.remove(0);             
+            _surfaceTextures.remove(0);
         }
         return true;
     }
@@ -293,6 +298,22 @@ class RCTCameraViewFinder extends TextureView implements TextureView.SurfaceText
             RCTCameraViewFinder.barcodeScannerTaskLock = true;
             new ReaderAsyncTask(camera, data).execute();
         }
+    }
+
+    @Override
+    public void onHostResume() {
+        // Start Preview/ Camera after permission was set
+        startPreview();
+    }
+
+    @Override
+    public void onHostPause() {
+        // Stop Preview/ Camera after permission was set
+        startPreview();
+    }
+
+    @Override
+    public void onHostDestroy() {
     }
 
     private class ReaderAsyncTask extends AsyncTask<Void, Void, Void> {
